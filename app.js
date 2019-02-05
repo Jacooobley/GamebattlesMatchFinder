@@ -10,6 +10,5 @@ require('dotenv-safe').load({
   });
   
 app.get('/findMatch', require('./api/findMatch'));
-//TODO: route for reporting match
 
 app.listen(port, () => console.log(`GB finder app listening on port ${port}!`))

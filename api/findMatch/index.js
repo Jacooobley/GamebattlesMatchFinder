@@ -1,8 +1,5 @@
-const {Builder, By, Key, until, Capabilities} = require('selenium-webdriver');
-//TODO: Build in browser support via config
+const {Builder, By, Capabilities} = require('selenium-webdriver');
 require('chromedriver');
-
-//TODO: env variable for wait time
 
 const findMatch = async (req, res) => {
 
@@ -35,7 +32,7 @@ const findMatch = async (req, res) => {
         //Find match
         await webdriver.get(`http://gamebattles.majorleaguegaming.com/ps4/call-of-duty-black-ops-4/ladder/team-eu/match-finder`);
         await webdriver.findElement(By.xpath("//option[@value='2122']")).click();
-        await sleep(000);
+        await sleep(1000);
         await webdriver.findElement(By.xpath("//input[@value='Search Matches']")).click();
        
         //Check matches
@@ -50,7 +47,7 @@ const findMatch = async (req, res) => {
 
             //If we cant find any matches for the gametype, sleep and try again
             if (resultElementHTML.includes('There are no matches available meeting your search criteria.')){
-                await sleep(10000);
+                await sleep(process.env['waitTime']);
                 await webdriver.navigate().refresh();
             } else {
                 var matches = await webdriver.findElements(By.xpath('//*[@id="mf_sorted_result"]/tr'));
@@ -73,7 +70,7 @@ const findMatch = async (req, res) => {
                 }
 
                 if (validMatch == null) {
-                    await sleep(10000);
+                    await sleep(process.env['waitTime']);
                     await webdriver.navigate().refresh();
                 }
             }
@@ -97,14 +94,18 @@ const findMatch = async (req, res) => {
             }
         }
 
-        //TODO: accept t&cs
-        //TODO:accept match
-        //TODO:if match confirmed - Add PSN?
-        //TODO:if match missed, go again
-
-        res.status(200).json({ message: 'Match found sucessfully' });
+        await webdriver.findElement(By.xpath('//*[@id="subcontainer"]/div[7]/div[2]/form/div[4]/input')).click();
+        
+        //Don't accept matches in development mode
+        if (!process.env['devMode']) {
+            await webdriver.findElement(By.xpath('//*[@id="accept_match_button"]')).click();
+        }
+        
         webdriver.close();
+        res.status(200).json({ message: 'Match found sucessfully' });
     } catch (err) {
+        webdriver.close();
+        console.log(err);
         res.status(500).json({ message: 'Error finding match' });
     }
 };
